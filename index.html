@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>工艺计算工具</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      display: flex;
+      flex-wrap: wrap;
+      overflow: hidden;
+    }
+    .section {
+      flex: 1 1 350px;
+      padding: 32px;
+      min-width: 320px;
+    }
+    .section:not(:last-child) {
+      border-right: 1px solid #eee;
+    }
+    h2 {
+      font-size: 1.4em;
+      margin-bottom: 20px;
+      color: #1890ff;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-weight: 500;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: #1890ff;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    .result-table th, .result-table td {
+      border: 1px solid #e0e0e0;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .result-table th {
+      background: #f8f9fa;
+      color: #1890ff;
+    }
+    .formula {
+      background: #f6f8fa;
+      border-left: 4px solid #1890ff;
+      padding: 12px 18px;
+      margin-bottom: 18px;
+      font-size: 1em;
+      color: #444;
+    }
+    .error {
+      color: #e53935;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    @media (max-width: 800px) {
+      .container { flex-direction: column; }
+      .section { border-right: none; border-bottom: 1px solid #eee; }
+      .section:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 输入区 -->
+    <div class="section" id="input-section">
+      <h2>输入参数</h2>
+      <div class="form-group">
+        <label for="G">火炬气质量流量 G (kg/h)</label>
+        <input type="number" id="G" min="0" step="any" placeholder="请输入质量流量" value="67400" />
+      </div>
+      <div class="form-group">
+        <label for="M">火炬气平均分子量 M (kg/kmol)</label>
+        <input type="number" id="M" min="0" step="any" placeholder="请输入分子量" value="19.195" />
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" onclick="calculate()">重新计算</button>
+        <button class="btn-secondary" onclick="printPDF()">导出PDF</button>
+      </div>
+      <div id="input-error" class="error" style="display:none;"></div>
+    </div>
+    <!-- 输出区 -->
+    <div class="section" id="output-section">
+      <h2>计算结果</h2>
+      <div id="output-content">
+        <div class="formula">
+          <strong>计算公式：</strong><br/>
+          火炬气标准体积流量<br/>
+          <span style="color:#1890ff;">q<sub>V</sub> = G / M × 22.4</span>
+        </div>
+        <table class="result-table">
+          <tr>
+            <th>参数</th>
+            <th>数值</th>
+            <th>单位</th>
+            <th>依据标准</th>
+          </tr>
+          <tr>
+            <td>火炬气质量流量 G</td>
+            <td id="val-G">67400</td>
+            <td>kg/h</td>
+            <td rowspan="3">SH3009-2013 第5.2.3条</td>
+          </tr>
+          <tr>
+            <td>火炬气平均分子量 M</td>
+            <td id="val-M">19.195</td>
+            <td>kg/kmol</td>
+          </tr>
+          <tr>
+            <td>火炬气标准体积流量 q<sub>V</sub></td>
+            <td id="val-qV">78592.36</td>
+            <td>Nm³/h</td>
+          </tr>
+        </table>
+        <div class="formula" id="formula-process">
+          <strong>详细过程：</strong><br/>
+          q<sub>V</sub> = 67400 / 19.195 × 22.4 = 78592.36 Nm³/h
+        </div>
+        <div>
+          <strong>取值依据：</strong> 所有参数均依据设计工艺文件及《SH3009-2013 石油化工卧式分液罐设计规范》取值。
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function calculate() {
+      const G = parseFloat(document.getElementById('G').value);
+      const M = parseFloat(document.getElementById('M').value);
+      const errorDiv = document.getElementById('input-error');
+      errorDiv.style.display = "none";
+      // 输入校验
+      if (isNaN(G) || G <= 0) {
+        errorDiv.innerText = "火炬气质量流量G必须为正数";
+        errorDiv.style.display = "block";
+        return;
+      }
+      if (isNaN(M) || M <= 0) {
+        errorDiv.innerText = "火炬气平均分子量M必须为正数";
+        errorDiv.style.display = "block";
+        return;
+      }
+      // 计算
+      const qV = +(G / M * 22.4).toFixed(2);
+      // 输出
+      document.getElementById('val-G').innerText = G;
+      document.getElementById('val-M').innerText = M;
+      document.getElementById('val-qV').innerText = qV;
+      document.getElementById('formula-process').innerHTML =
+        `<strong>详细过程：</strong><br/>
+        q<sub>V</sub> = ${G} / ${M} × 22.4 = ${qV} Nm³/h`;
+    }
+
+    function printPDF() {
+      window.print();
+    }
+  </script>
+</body>
+</html>
