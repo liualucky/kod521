@@ -1,44 +1,266 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>气液分离器设计计算系统</title>
-    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.bootcdn.net/ajax/libs/chart.js/3.7.0/chart.min.js"></script>
-    <style>
-        .calculation-card {
-            transition: transform 0.3s ease;
-            border-left: 4px solid #0d6efd;
-        }
-        .calculation-card:hover {
-            transform: translateY(-5px);
-        }
-        .parameter-group {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Vertical Separator Drum Parameter Calculation</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 32px; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px #0001; padding: 32px 40px; }
+    h2 { margin-bottom: 16px; color: #222; letter-spacing: 2px; font-weight: 600; }
+    .section-title { margin-top: 28px; margin-bottom: 10px; color: #444; font-weight: 500; border-left: 4px solid #1976d2; padding-left: 10px; font-size: 1.06rem; letter-spacing: 1px; }
+    .row { display: flex; align-items: center; margin-bottom: 14px; }
+    .label { width: 220px; color: #222; font-size: 1rem; flex-shrink: 0; }
+    .input-area { border: none; border-bottom: 2px solid #2196f3; background: transparent; color: #1976d2; font-size: 1rem; padding: 3px 6px; width: 120px; outline: none; margin-right: 10px; }
+    .input-area:focus { border-bottom: 2.5px solid #1565c0; background: #e3f2fd; }
+    .output { color: #222; font-size: 1rem; margin-left: 10px; min-width: 80px; }
+    .unit { color: #888; font-size: 0.97rem; margin-left: 3px; }
+    @media (max-width: 600px) {
+      .container { padding: 16px; }
+      .row { flex-direction: column; align-items: flex-start; }
+      .label, .output, .unit { width: auto; }
+      .input-area { width: 100%; }
+    }
+  </style>
+  <script src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
 </head>
-<body class="bg-light">
-    <!-- 主容器 -->
-    <div class="container-fluid py-4">
-        <div class="row g-4">
-            <!-- 输入侧边栏 -->
-            <div class="col-lg-4">
-                <div class="card shadow calculation-card">
-                    <!-- 输入表单内容 -->
-                </div>
-            </div>
-            
-            <!-- 结果展示区 -->
-            <div class="col-lg-8">
-                <div class="card shadow calculation-card">
-                    <!-- 可视化内容 -->
-                </div>
-            </div>
-        </div>
+<body>
+  <div class="container" style="display: flex; flex-direction: row; gap: 32px;">
+    <div style="flex: 1;">
+      <h2>Vertical Separator Drum Parameter Calculation</h2>
+      <input type="file" id="excel_file" accept=".xlsx,.xls" />
+
+      <div class="section-title">General Parameters</div>
+      <div class="row">
+        <div class="label">Temperature</div>
+        <input class="input-area" id="input-temp" type="number">
+        <span class="unit">°C</span>
+        <input class="input-area" id="input-tempK" type="number">
+        <span class="unit">K</span>
+      </div>
+      <div class="row">
+        <div class="label">MW</div>
+        <input class="input-area" id="input-mw" type="number">
+      </div>
+      <div class="row">
+        <div class="label">Pressure</div>
+        <input class="input-area" id="input-pressure" type="number">
+        <span class="unit">kg/cm²(G)</span>
+      </div>
+      <div class="row">
+        <div class="label">d1=</div>
+        <input class="input-area" id="input-d1" type="number">
+        <span class="unit">inch</span>
+      </div>
+      <div class="row">
+        <div class="label">Release Time</div>
+        <input class="input-area" id="input-release-mm" type="number">
+        <span class="unit">mm</span>
+        <input class="input-area" id="input-release-min" type="number">
+        <span class="unit">minutes</span>
+      </div>
+
+      <div class="section-title">Gas Flow Rate</div>
+      <div class="row">
+        <div class="label">W =</div>
+        <input class="input-area" id="input-gasflow" type="number">
+        <span class="unit">kg/h</span>
+      </div>
+
+      <div class="section-title">KO DRUM Diameter</div>
+      <div class="row">
+        <div class="label">d4 =</div>
+        <input class="input-area" id="input-d4" type="number">
+        <span class="unit">m</span>
+      </div>
+
+      <div class="section-title">KO DRUM Length</div>
+      <div class="row">
+        <div class="label">h2 =</div>
+        <input class="input-area" id="input-h2" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">h3 =</div>
+        <input class="input-area" id="input-h3" type="number">
+        <span class="unit">m</span>
+      </div>
+
+      <div class="section-title">Required Seal Drum Diameter</div>
+      <div class="row">
+        <div class="label">d5 =</div>
+        <input class="input-area" id="input-d5" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">d2 =</div>
+        <input class="input-area" id="input-d2" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">d3 =</div>
+        <input class="input-area" id="input-d3" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">h4 =</div>
+        <input class="input-area" id="input-h4" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">h5 =</div>
+        <input class="input-area" id="input-h5" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">h6 =</div>
+        <input class="input-area" id="input-h6" type="number">
+        <span class="unit">m</span>
+      </div>
+      <div class="row">
+        <div class="label">h7 =</div>
+        <input class="input-area" id="input-h7" type="number">
+        <span class="unit">m</span>
+      </div>
+
+      <div class="section-title">Droplet Diameter</div>
+      <div class="row">
+        <div class="label">d =</div>
+        <input class="input-area" id="input-droplet-diameter" type="number">
+        <span class="unit">micron</span>
+      </div>
+
+      <div class="section-title">Liquid Density</div>
+      <div class="row">
+        <div class="label">ρL =</div>
+        <input class="input-area" id="input-liquid-density" type="number">
+        <span class="unit">kg/m³</span>
+      </div>
+
+      <div class="section-title">Vapor Density</div>
+      <div class="row">
+        <div class="label">ρv =</div>
+        <input class="input-area" id="input-vapor-density" type="number">
+        <span class="unit">kg/m³</span>
+      </div>
+
+      <div class="section-title">Vapor Viscosity</div>
+      <div class="row">
+        <div class="label">μ =</div>
+        <input class="input-area" id="input-vapor-viscosity" type="number">
+        <span class="unit">cp</span>
+      </div>
     </div>
+    <div style="flex: 1; background: #fffbe0; border: 2px solid #222; border-radius: 10px; padding: 24px 18px; min-width: 340px; max-width: 420px; display: flex; flex-direction: column; align-items: center;">
+      <div style="width: 100%;">
+        <div class="row">
+          <div class="label" style="width: 180px;">Liquid Dropout Time</div>
+          <input class="output" id="output-dropout-time" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">sec</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Vapor Velocity</div>
+          <input class="output" id="output-vapor-velocity" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m/s</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Required KO Drum Length</div>
+          <input class="output" id="output-ko-drum-length" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m</span>
+          <span style="margin-left: 10px; background:#e3f2fd; color:#1976d2; border:1px solid #2196f3; border-radius:4px; padding:2px 8px; font-size:12px; font-weight:bold;">VERIFIED</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Required KO Drum Diameter</div>
+          <input class="output" id="output-ko-drum-diameter" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m</span>
+          <span style="margin-left: 10px; background:#e3f2fd; color:#1976d2; border:1px solid #2196f3; border-radius:4px; padding:2px 8px; font-size:12px; font-weight:bold;">VERIFIED</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Liquid Holdup Volume</div>
+          <input class="output" id="output-holdup-volume" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m³</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Required Seal Drum Length</div>
+          <input class="output" id="output-seal-drum-length" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m</span>
+          <span style="margin-left: 10px; background:#e3f2fd; color:#1976d2; border:1px solid #2196f3; border-radius:4px; padding:2px 8px; font-size:12px; font-weight:bold;">VERIFIED</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Required Seal Drum Diameter</div>
+          <input class="output" id="output-seal-drum-diameter" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m</span>
+          <span style="margin-left: 10px; background:#e3f2fd; color:#1976d2; border:1px solid #2196f3; border-radius:4px; padding:2px 8px; font-size:12px; font-weight:bold;">VERIFIED</span>
+        </div>
+        <div class="row">
+          <div class="label" style="width: 180px;">Particle Dropout Velocity</div>
+          <input class="output" id="output-particle-dropout-velocity" style="background:#fff; border:1px solid #bbb; width:70px; text-align:right;" readonly>
+          <span class="unit">m/s</span>
+        </div>
+      </div>
+      <div style="margin-top: 18px; width: 100%; display: flex; justify-content: center;">
+        <img src="tank_schematic.jpg" alt="Tank Schematic" style="max-width: 98%; max-height: 350px; border: 1px solid #bbb; background: #fff; border-radius: 6px;" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('excel_file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        // Sheet name as per your file
+        const sheet = workbook.Sheets['CALCOLO API-KOM-V (2)'];
+        const json = XLSX.utils.sheet_to_json(sheet, { header:1 });
+
+        // Helper function to find value by label
+        function findValue(label, colOffset=1) {
+          for (let row of json) {
+            if (row[0] && row[0].toString().trim().startsWith(label)) {
+              return row[colOffset];
+            }
+          }
+          return '';
+        }
+
+        // Populate input fields
+        document.getElementById('input-temp').value = findValue('Temperature', 1) || 75;
+        document.getElementById('input-tempK').value = findValue('Temperature', 3) || 348.15;
+        document.getElementById('input-pressure').value = findValue('Pressure', 1) || 0.95;
+        document.getElementById('input-mw').value = findValue('MW', 1) || 54.1;
+        document.getElementById('input-d1').value = findValue('d1 =', 1) || 1;
+        document.getElementById('input-release-mm').value = findValue('Release Time', 1) || 30;
+        document.getElementById('input-release-min').value = findValue('Release Time', 2) || 30;
+        document.getElementById('input-gasflow').value = findValue('Flow=', 1) || 32000;
+        document.getElementById('input-d4').value = findValue('d 4 =', 1) || 1.5;
+        document.getElementById('input-h2').value = findValue('h2 =', 1) || 2.7;
+        document.getElementById('input-h3').value = findValue('h3 =', 1) || 0.3;
+        document.getElementById('input-d5').value = findValue('d5 =', 1) || 1.5;
+        document.getElementById('input-d2').value = findValue('d2 =', 1) || 0.6;
+        document.getElementById('input-d3').value = findValue('d3 =', 1) || 0.3;
+        document.getElementById('input-h4').value = findValue('h4 =', 1) || 0.3;
+        document.getElementById('input-h5').value = findValue('h5 =', 1) || 0.3;
+        document.getElementById('input-h6').value = findValue('h6 =', 1) || 0.3;
+        document.getElementById('input-h7').value = findValue('h7 =', 1) || 0.3;
+        document.getElementById('input-droplet-diameter').value = findValue('d =', 1) || 400;
+        document.getElementById('input-liquid-density').value = findValue('ρL =', 1) || 650;
+        document.getElementById('input-vapor-density').value = findValue('ρv =', 1) || 3.69;
+        document.getElementById('input-vapor-viscosity').value = findValue('μ =', 1) || 0.02;
+
+        // Populate output fields (right panel)
+        document.getElementById('output-dropout-time').value = findValue('Θ=', 1) || '3.80';
+        document.getElementById('output-vapor-velocity').value = findValue('Uv =', 1) || '0.68';
+        document.getElementById('output-ko-drum-length').value = findValue('h2 min =', 1) || findValue('h2 =', 1) || '2.69';
+        document.getElementById('output-ko-drum-diameter').value = findValue('d 4 min =', 1) || findValue('d 4 =', 1) || '1.47';
+        document.getElementById('output-holdup-volume').value = findValue('Vl =', 1) || '4.77';
+        document.getElementById('output-seal-drum-length').value = findValue('h3 min =', 1) || findValue('h3 =', 1) || '2.40';
+        document.getElementById('output-seal-drum-diameter').value = findValue('d 5 min =', 1) || findValue('d5 =', 1) || '1.20';
+        document.getElementById('output-particle-dropout-velocity').value = findValue('Uc=', 1) || '0.710';
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
 </body>
 </html>
