@@ -20,6 +20,12 @@
       .label, .output, .unit { width: auto; }
       .input-area { width: 100%; }
     }
+    @media print {
+      body * { visibility: hidden !important; }
+      #output-panel, #output-panel * { visibility: visible !important; }
+      #output-panel { position: absolute !important; left: 0; top: 0; width: 100vw !important; background: #fffbe0 !important; box-shadow: none !important; border: none !important; }
+      #print-btn { display: none !important; }
+    }
   </style>
   <script src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
 </head>
@@ -150,7 +156,7 @@
         <span class="unit">cp</span>
       </div>
     </div>
-    <div style="flex: 1; background: #fffbe0; border: 2px solid #222; border-radius: 10px; padding: 24px 18px; min-width: 340px; max-width: 420px; display: flex; flex-direction: column; align-items: center;">
+    <div style="flex: 1; background: #fffbe0; border: 2px solid #222; border-radius: 10px; padding: 24px 18px; min-width: 340px; max-width: 420px; display: flex; flex-direction: column; align-items: center;" id="output-panel">
       <div style="width: 100%;">
         <div class="row">
           <div class="label" style="width: 180px;">Liquid Dropout Time</div>
@@ -200,6 +206,7 @@
       <div style="margin-top: 18px; width: 100%; display: flex; justify-content: center;">
         <img src="tank_schematic.jpg" alt="Tank Schematic" style="max-width: 98%; max-height: 350px; border: 1px solid #bbb; background: #fff; border-radius: 6px;" />
       </div>
+      <button id="print-btn" style="margin-top: 24px; padding: 8px 28px; font-size: 1rem; background: #1976d2; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Print</button>
     </div>
   </div>
 
@@ -261,6 +268,10 @@
       };
       reader.readAsArrayBuffer(file);
     });
+
+    document.getElementById('print-btn').onclick = function() {
+      window.print();
+    };
   </script>
 </body>
 </html>
